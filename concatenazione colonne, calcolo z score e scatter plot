@@ -1,0 +1,20 @@
+# 1. Filtriamo usando le tre colonne che compongono la classe 't-CS-s'
+subset = df[
+    (df['Genotype'] == 'Ts65Dn') & 
+    (df['Behavior'] == 'C/S') & 
+    (df['Treatment'] == 'Saline')
+].copy()
+
+# 2. Calcoliamo i valori standardizzati (z-score)
+# (Il resto del codice rimane identico)
+z_bcatenin = (subset['Bcatenin_N'] - subset['Bcatenin_N'].mean()) / subset['Bcatenin_N'].std()
+z_tau = (subset['Tau_N'] - subset['Tau_N'].mean()) / subset['Tau_N'].std()
+
+# 3. Disegniamo lo scatterplot
+plt.figure(figsize=(8, 6))
+plt.scatter(z_bcatenin, z_tau, alpha=0.6, color='teal', edgecolor='w')
+plt.title("Standardized Bcatenin_N vs. Tau_N (Group: t-CS-s)")
+plt.xlabel("z-Bcatenin")
+plt.ylabel("z-Tau")
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.show()
