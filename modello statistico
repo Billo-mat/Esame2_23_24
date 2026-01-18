@@ -1,0 +1,27 @@
+subset = df[(df['Genotype'] == 'Ts65Dn') & 
+            (df['Behavior'] == 'C/S') & 
+            (df['Treatment'] == 'Saline')].dropna(subset=['Bcatenin_N', 'Tau_N']).copy()
+
+# 2. Standardizzazione (come calcolato nell'Esercizio 7)
+M = (subset['Bcatenin_N'] - subset['Bcatenin_N'].mean()) / subset['Bcatenin_N'].std()
+Tau_z = (subset['Tau_N'] - subset['Tau_N'].mean()) / subset['Tau_N'].std()
+
+# 3. Definizione del modello PyMC
+with pm.Model() as model:
+    # Priors (Parametri a priori)
+    alpha = pm.Normal('alpha', mu=0, sigma=0.2)
+    beta = pm.Normal('beta', mu=0, sigma=0.5)
+    gamma = pm.Exponential('gamma', lam=1.0)
+    
+    # Equazione lineare per la media (mu)
+    mu = alpha + beta * M.values
+    
+    # Likelihood (Verosimiglianza dei dati osservati)
+    # Tau_N standardizzato segue una Normale con media mu e deviazione gamma
+    likelihood = pm.Normal('likelihood', mu=mu, sigma=gamma, observed=Tau_z.values)
+    
+    # Campionamento (MCMC)
+    trace = pm.sample(1000, return_inferencedata=True)
+
+# 4. Stampa del riassunto statistico
+print(az.summary(trace))
