@@ -1,0 +1,23 @@
+def evodd_digits(num: float, flag: bool) -> int:
+    """
+    Returns digits from the decimal representation based on the flag.
+    
+    >>> evodd_digits(1.2345, True)
+    24
+    >>> evodd_digits(1.2345, False)
+    135
+    """
+    # Trasformiamo il float in stringa
+    # abs() serve per evitare che il segno '-' venga processato
+    s_num = str(abs(num))
+    
+    res = ""
+    for char in s_num:
+        if char.isdigit(): # Questo salta automaticamente il punto '.'
+            digit = int(char)
+            # Se cerchiamo i pari (flag=True) e digit è pari
+            # OPPURE se cerchiamo i dispari (flag=False) e digit è dispari
+            if (digit % 2 == 0) == flag:
+                res += char
+    
+    return int(res) if res else 0
