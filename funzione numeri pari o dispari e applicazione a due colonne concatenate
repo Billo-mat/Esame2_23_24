@@ -1,0 +1,28 @@
+
+def evodd_digits(num, flag: bool) -> int:
+    """
+    >>> evodd_digits(1.2345, True)
+    24
+    """
+    # Trasformiamo in stringa e rimuoviamo TUTTI i punti decimali
+    # Questo risolve il problema del '2.816.5.99'
+    s_num = str(num).replace('.', '')
+    
+    res = ""
+    for char in s_num:
+        if char.isdigit():
+            digit = int(char)
+            if (digit % 2 == 0) == flag:
+                res += char
+                
+    return int(res) if res else 0
+
+# Creiamo la colonna NR_evodd
+# axis=1 indica a pandas di applicare la funzione riga per riga
+df['NR_evodd'] = df.apply(
+    lambda row: evodd_digits(
+        (str(row['NR1_N']) + str(row['NR2A_N'])), 
+        True
+    ), 
+    axis=1
+)
