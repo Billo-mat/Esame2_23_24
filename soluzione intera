@@ -1,0 +1,167 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import pymc as pm
+import arviz as az
+# Load the data using MouseID as the index
+df = pd.read_csv('mice.csv', index_col='MouseID')
+
+
+plt.figure(figsize=(10, 6))
+
+df['NR1_N'].dropna().hist(bins=20,  density=False, alpha=0.5, label='NR1_N', color = 'blue')
+df['NR2A_N'].dropna().hist(bins=20, density=False, alpha=0.5, label='NR2A_N', color = 'yellow')
+
+
+
+# 3. Aggiunta di titoli e nomi degli assi
+plt.title('Distribuzione dei valori della proteina NR1_N & NR2A_N', fontsize=15)
+plt.xlabel('Livello di espressione (NR1_N & NR2A_N)', fontsize=12)
+plt.ylabel('Numero di campioni (Frequenza)', fontsize=12)
+plt.legend()
+
+# 4. Pulizia del grafico e salvataggio
+plt.grid(visible=None)
+plt.show()
+
+# Creiamo una figura con 1 riga e 2 colonne
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+# --- COLONNA 1: Contrasto per Genotipo ---
+genotypes = df['Genotype'].unique()
+for g in genotypes:
+    # Filtriamo i dati per il genotipo corrente e rimuoviamo i valori mancanti
+    subset = df[df['Genotype'] == g]['NR2A_N'].dropna()
+    axes[0].hist(subset, bins=20, density=True, alpha=0.5, label=g)
+
+axes[0].set_title('Confronto Genotipi NR2A_N (Control vs Ts65Dn)')
+axes[0].set_xlabel('Livello di Espressione')
+axes[0].set_ylabel('Densità')
+axes[0].legend()
+
+# --- COLONNA 2: Contrasto per Trattamento ---
+treatments = df['Treatment'].unique()
+for t in treatments:
+    # Filtriamo i dati per il trattamento corrente e rimuoviamo i valori mancanti
+    subset = df[df['Treatment'] == t]['NR2A_N'].dropna()
+    axes[1].hist(subset, bins=20, density=True, alpha=0.5, label=t)
+
+axes[1].set_title('Confronto Trattamenti NR2A_N (Memantine vs Saline)')
+axes[1].set_xlabel('Livello di Espressione')
+axes[1].set_ylabel('Densità')
+axes[1].legend()
+
+# Ottimizziamo lo spazio tra i grafici e salviamo
+plt.tight_layout()
+plt.show()
+
+
+# 1. Prepariamo la lista delle proteine (sono 22)
+p_proteins = [col for col in df.columns if col.startswith('p')]
+
+# 2. Creiamo la griglia
+fig, axes = plt.subplots(22, 2, figsize=(5, 66))
+
+genotypes = df['Genotype'].unique()
+treatments = df['Treatment'].unique()
+
+# Usiamo enumerate per avere sia l'indice della riga (i) che il nome della proteina (col)
+for i, col in enumerate(p_proteins):
+    
+    # --- COLONNA 0: Genotipi ---
+    for g in genotypes:
+        subset = df[df['Genotype'] == g][col].dropna()
+        axes[i, 0].hist(subset, bins=20, density=True, alpha=0.5, label=g)
+    
+    axes[i, 0].set_title(f'{col} by Genotype')
+    axes[i, 0].legend(fontsize='x-small')
+
+    # --- COLONNA 1: Trattamenti ---
+    for t in treatments:
+        subset = df[df['Treatment'] == t][col].dropna()
+        axes[i, 1].hist(subset, bins=20, density=True, alpha=0.5, label=t)
+        
+    axes[i, 1].set_title(f'{col} by Treatment')
+    axes[i, 1].legend(fontsize='x-small')
+
+plt.tight_layout()
+plt.show()
+
+
+def evodd_digits(num, flag: bool) -> int:
+    """
+    >>> evodd_digits(1.2345, True)
+    24
+    """
+    # Trasformiamo in stringa e rimuoviamo TUTTI i punti decimali
+    # Questo risolve il problema del '2.816.5.99'
+    s_num = str(num).replace('.', '')
+    
+    res = ""
+    for char in s_num:
+        if char.isdigit():
+            digit = int(char)
+            if (digit % 2 == 0) == flag:
+                res += char
+                
+    return int(res) if res else 0
+
+# Creiamo la colonna NR_evodd
+# axis=1 indica a pandas di applicare la funzione riga per riga
+df['NR_evodd'] = df.apply(
+    lambda row: evodd_digits(
+        (str(row['NR1_N']) + str(row['NR2A_N'])), 
+        True
+    ), 
+    axis=1
+)
+
+# 1. Filtriamo usando le tre colonne che compongono la classe 't-CS-s'
+subset = df[
+    (df['Genotype'] == 'Ts65Dn') & 
+    (df['Behavior'] == 'C/S') & 
+    (df['Treatment'] == 'Saline')
+].copy()
+
+# 2. Calcoliamo i valori standardizzati (z-score)
+# (Il resto del codice rimane identico)
+z_bcatenin = (subset['Bcatenin_N'] - subset['Bcatenin_N'].mean()) / subset['Bcatenin_N'].std()
+z_tau = (subset['Tau_N'] - subset['Tau_N'].mean()) / subset['Tau_N'].std()
+
+# 3. Disegniamo lo scatterplot
+plt.figure(figsize=(8, 6))
+plt.scatter(z_bcatenin, z_tau, alpha=0.6, color='teal', edgecolor='w')
+plt.title("Standardized Bcatenin_N vs. Tau_N (Group: t-CS-s)")
+plt.xlabel("z-Bcatenin")
+plt.ylabel("z-Tau")
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.show()
+
+
+subset = df[(df['Genotype'] == 'Ts65Dn') & 
+            (df['Behavior'] == 'C/S') & 
+            (df['Treatment'] == 'Saline')].dropna(subset=['Bcatenin_N', 'Tau_N']).copy()
+
+# 2. Standardizzazione (come calcolato nell'Esercizio 7)
+M = (subset['Bcatenin_N'] - subset['Bcatenin_N'].mean()) / subset['Bcatenin_N'].std()
+Tau_z = (subset['Tau_N'] - subset['Tau_N'].mean()) / subset['Tau_N'].std()
+
+# 3. Definizione del modello PyMC
+with pm.Model() as model:
+    # Priors (Parametri a priori)
+    alpha = pm.Normal('alpha', mu=0, sigma=0.2)
+    beta = pm.Normal('beta', mu=0, sigma=0.5)
+    gamma = pm.Exponential('gamma', lam=1.0)
+    
+    # Equazione lineare per la media (mu)
+    mu = alpha + beta * M.values
+    
+    # Likelihood (Verosimiglianza dei dati osservati)
+    # Tau_N standardizzato segue una Normale con media mu e deviazione gamma
+    likelihood = pm.Normal('likelihood', mu=mu, sigma=gamma, observed=Tau_z.values)
+    
+    # Campionamento (MCMC)
+    trace = pm.sample(1000, return_inferencedata=True)
+
+# 4. Stampa del riassunto statistico
+print(az.summary(trace))
+
