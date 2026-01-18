@@ -1,0 +1,25 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load the data using MouseID as the index
+df = pd.read_csv('mice.csv', index_col='MouseID')
+
+plt.figure(figsize=(10, 6))
+
+df['NR1_N'].dropna().hist(bins=20,  density=False, alpha=0.5, label='NR1_N', color = 'blue')
+df['NR2A_N'].dropna().hist(bins=20, density=False, alpha=0.5, label='NR2A_N', color = 'yellow')
+
+
+
+# 3. Aggiunta di titoli e nomi degli assi
+plt.title('Distribuzione dei valori della proteina NR1_N & NR2A_N', fontsize=15)
+plt.xlabel('Livello di espressione (NR1_N & NR2A_N)', fontsize=12)
+plt.ylabel('Numero di campioni (Frequenza)', fontsize=12)
+plt.legend()
+
+# 4. Pulizia del grafico e salvataggio
+plt.show()
+
+
+
+
