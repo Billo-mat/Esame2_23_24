@@ -1,0 +1,30 @@
+# 1. Prepariamo la lista delle proteine (sono 22)
+p_proteins = [col for col in df.columns if col.startswith('p')]
+
+# 2. Creiamo la griglia
+fig, axes = plt.subplots(22, 2, figsize=(5, 66))
+
+genotypes = df['Genotype'].unique()
+treatments = df['Treatment'].unique()
+
+# Usiamo enumerate per avere sia l'indice della riga (i) che il nome della proteina (col)
+for i, col in enumerate(p_proteins):
+    
+    # --- COLONNA 0: Genotipi ---
+    for g in genotypes:
+        subset = df[df['Genotype'] == g][col].dropna()
+        axes[i, 0].hist(subset, bins=20, density=True, alpha=0.5, label=g)
+    
+    axes[i, 0].set_title(f'{col} by Genotype')
+    axes[i, 0].legend(fontsize='x-small')
+
+    # --- COLONNA 1: Trattamenti ---
+    for t in treatments:
+        subset = df[df['Treatment'] == t][col].dropna()
+        axes[i, 1].hist(subset, bins=20, density=True, alpha=0.5, label=t)
+        
+    axes[i, 1].set_title(f'{col} by Treatment')
+    axes[i, 1].legend(fontsize='x-small')
+
+plt.tight_layout()
+plt.show()
