@@ -9,7 +9,7 @@ def evodd_digits(num: float, flag: bool) -> int:
     """
     # Trasformiamo il float in stringa
     # abs() serve per evitare che il segno '-' venga processato
-    s_num = str(abs(num))
+    s_num = str(abs(num)).replace('.','')
     
     res = ""
     for char in s_num:
